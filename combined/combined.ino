@@ -32,59 +32,59 @@ Serial.begin(9600, SERIAL_8N1, RXD3, TXD3);
 // Serial.begin(115200);
 Wire.begin();
 
-TCA9548A(1);
-if (!bmp.begin(0x76)){
-Serial.println("Sensor 0 fail") ; 
-while(1);
-}
-if (!sht.begin(0x44)){
-Serial.println("Sensor sht 0 fail") ; 
-while(1);
-}
-if (!hdc.begin(0x40)){
-Serial.println("Sensor sht 0 fail") ; 
-while(1);
-}
-
-TCA9548A(2);
-if (!bmp.begin(0x76)){
-Serial.println("Sensor 1 fail");
-while(1);
-}
-if (!sht.begin(0x44)){
-Serial.println("Sensor sht 2fail") ; 
-while(1);
-}
-if (!hdc.begin(0x40)){
-Serial.println("Sensor hdc 0 fail") ; 
-while(1);
-}
-
-TCA9548A(3);
-if (!bmp.begin(0x76))
-{Serial.println("Sensor 2 fail");
-while(1);
-}
+// TCA9548A(1);
+// if (!bmp.begin(0x76)){
+// Serial.println("Sensor bme 0 fail") ; 
+// while(1);
+// }
 // if (!sht.begin(0x44)){
 // Serial.println("Sensor sht 0 fail") ; 
 // while(1);
 // }
-if (!hdc.begin(0x40)){
-Serial.println("Sensor sht 0 fail") ; 
-while(1);
-}
+// if (!hdc.begin(0x40)){
+// Serial.println("Sensor hdc 0 fail") ; 
+// while(1);
+// }
+
+// TCA9548A(2);
+// if (!bmp.begin(0x76)){
+// Serial.println("Sensor bme 1 fail");
+// while(1);
+// }
+// if (!sht.begin(0x44)){
+// Serial.println("Sensor sht 2fail") ; 
+// while(1);
+// }
+// if (!hdc.begin(0x40)){
+// Serial.println("Sensor hdc 0 fail") ; 
+// while(1);
+// }
+
+// TCA9548A(3);
+// if (!bmp.begin(0x76))
+// {Serial.println("Sensor 2 fail");
+// while(1);
+// }
+// if (!sht.begin(0x44)){
+// Serial.println("Sensor sht 2 fail") ; 
+// while(1);
+// }
+// if (!hdc.begin(0x40)){
+// Serial.println("Sensor hdc 2 fail") ; 
+// while(1);
+// }
 TCA9548A(4);
 if (!htu.begin()){
 Serial.println("Sensor sht 0 fail") ; 
 while(1);
 }
-TCA9548A(0);
+TCA9548A(5);
 if (!htu.begin()){
-Serial.println("Sensor sht 0 fail") ; 
+Serial.println("Sensor hdc 0 fail") ; 
 while(1);
 }
-TCA9548A(6);
-if (!htu.begin()){
+TCA9548A(7);
+if (htu.begin()){
 Serial.println("Sensor sht 0 fail") ; 
 while(1);
 }
@@ -102,70 +102,21 @@ struct pms5003data data;
 
 void loop()
 {
-bme();
-sht3();
-hdc1();
+// bme();
+// sht3();
+// hdc1();
 htu1();
 Serial.println("*********");
-air();
+// air();
 }
 
-void bme(){
-  TCA9548A(1);
-Serial.print(",BME "); Serial.print(bmp.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(bmp.readHumidity()); Serial.print(" % ");
-TCA9548A(2);
-Serial.print(",BME "); Serial.print( bmp.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(bmp.readHumidity()); Serial.print(" % ");
-TCA9548A(3);
-Serial.print(",BME "); Serial.print(bmp.readTemperature()); Serial.print(" deg.C");
-Serial.print(", "); Serial.print(bmp.readHumidity()); Serial.print(" % ");
-delay(2000);
-Serial.println();
-}
 
-void sht3(){
-  TCA9548A(1);
-Serial.print(",SHT "); Serial.print(sht.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(sht.readHumidity()); Serial.print(" % ");
-TCA9548A(2);
-Serial.print(",SHT "); Serial.print( sht.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(sht.readHumidity()); Serial.print(" % ");
-// TCA9548A(3);
-// Serial.print(",SHT "); Serial.print(sht.readTemperature()); Serial.print(" deg.C");
-// Serial.print(", "); Serial.print(sht.readHumidity()); Serial.print(" % ");
-delay(2000);
-Serial.println();
-}
 
-void hdc1(){
-   TCA9548A(1);
-Serial.print(",HDC "); Serial.print(hdc.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(hdc.readHumidity()); Serial.print(" % ");
-TCA9548A(2);
-Serial.print(",HDC "); Serial.print( hdc.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(hdc.readHumidity()); Serial.print(" % ");
-TCA9548A(3);
-Serial.print(",HDC "); Serial.print(hdc.readTemperature()); Serial.print(" deg.C");
-Serial.print(", "); Serial.print(hdc.readHumidity()); Serial.print(" % ");
-delay(2000);
-Serial.println();
-}
 
-void htu1(){
-   TCA9548A(4);
-Serial.print(",HTU "); Serial.print(htu.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(htu.readHumidity()); Serial.print(" % ");
 
-TCA9548A(6);
-Serial.print(",HTU "); Serial.print(htu.readTemperature()); Serial.print(" deg.C");
-Serial.print(", "); Serial.print(htu.readHumidity()); Serial.print(" % ");
-TCA9548A(0);
-Serial.print(",HTU "); Serial.print( hdc.readTemperature()); Serial.print(" deg.C, ");
-Serial.print(", "); Serial.print(htu.readHumidity()); Serial.print(" % ");
-delay(2000);
-Serial.println();
-}
+
+
+
 
 
 void air(){
