@@ -6,6 +6,40 @@
 #include "Adafruit_HTU21DF.h"
 #include <SD.h>
 #include <ESP32Time.h>
+#include <SoftwareSerial.h>
+
+#define SIM800L_IP5306_VERSION_20190610
+// Define the serial console for debug prints, if needed
+#define DUMP_AT_COMMANDS
+#define TINY_GSM_DEBUG          SerialMon
+#include "utilities.h"
+// Set serial for debug console (to the Serial Monitor, default speed 115200)
+#define SerialMon Serial
+// Set serial for AT commands (to the module)
+#define SerialAT  Serial1
+
+// Configure TinyGSM library
+#define TINY_GSM_MODEM_SIM800          // Modem is SIM800
+#define TINY_GSM_RX_BUFFER      1024   // Set RX buffer to 1Kb
+
+#include <TinyGsmClient.h>
+
+#ifdef DUMP_AT_COMMANDS
+#include <StreamDebugger.h>
+StreamDebugger debugger(SerialAT, SerialMon);
+TinyGsm modem(debugger);
+#else
+TinyGsm modem(SerialAT);
+#endif
+// Set phone numbers, if you want to test SMS and Calls
+#define SMS_TARGET  "+256788509024"
+#define CALL_TARGET "+256788509024"
+
+
+
+
+
+
 
 
 unsigned long previousMillis = 0;
@@ -55,9 +89,9 @@ void TCA9548A(uint8_t bus){
 File myfile;
 const int CS = 5;
 
-#define RXD1 15 // To sensor TXD
-#define TXD1 4 // To sensor RXD
-
+// #define RXD1 15 // To sensor TXD
+// #define TXD1 4 // To sensor RXD
+SoftwareSerial mySerial4(15, 4); // RX4, TX4
 #define RXD2 14 // To sensor TXD
 #define TXD2 18 // To sensor RXD
 
@@ -66,76 +100,40 @@ const int CS = 5;
 
 
 void setup() {
-  
-Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1);
-Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
-Serial.begin(9600, SERIAL_8N1, RXD3, TXD3);
-// rtc.setTime(10, 15, 17, 10, 3, 2023);  // 17th Jan 2021 15:24:30
 Wire.begin();
+// Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1);
+mySerial4.begin(115200);
+Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
+SerialMon.begin(115200, SERIAL_8N1, RXD3, TXD3);
+delay(10);
+// rtc.setTime(10, 15, 17, 10, 3, 2023);  // 17th Jan 2021 15:24:30
+if (setupPMU() == false) {
+        Serial.println("Setting power error");
+    }
 
+setupModem();
+SerialAT.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
+delay(3000);
 
+SerialMon.println("Initializing modem...");
+    modem.restart();
 
-TCA9548A(1);
-if (!bmp.begin(0x76)){
-Serial.println("Sensor bme 0 fail") ; 
-while(1);
-}
-if (!sht.begin(0x44)){
-Serial.println("Sensor sht 0 fail") ; 
-while(1);
-}
-if (!htu.begin()){
-Serial.println("Sensor hdc 0 fail") ; 
-while(1);
-}
-
-TCA9548A(2);
-if (!bmp.begin(0x76)){
-Serial.println("Sensor bme 1 fail");
-while(1);
-}
-if (!sht.begin(0x44)){
-Serial.println("Sensor sht 2fail") ; 
-while(1);
-}
-if (!hdc.begin(0x40)){
-Serial.println("Sensor hdc 0 fail") ; 
-while(1);
-}
-
-TCA9548A(3);
-if (!bmp.begin(0x76))
-{Serial.println("Sensor 2 fail");
-while(1);
-}
-if (!sht.begin(0x44)){
-Serial.println("Sensor sht 2 fail") ; 
-while(1);
-}
-if (!hdc.begin(0x40)){
-Serial.println("Sensor hdc 2 fail") ; 
-while(1);
-}
-TCA9548A(4);
-if (!htu.begin()){
-Serial.println("Sensor htu 1 fail") ; 
-while(1);
-}
-TCA9548A(5);
-if (!htu.begin()){
-Serial.println("Sensor htu 2 fail") ; 
-while(1);
-}
-TCA9548A(0);
-if (hdc.begin(0x40)){
-Serial.println("Sensor hdc 3 fail") ; 
-while(1);
-}
- Serial.println("Initializing SD card...");
-  if (!SD.begin(CS)) {
-    Serial.println("initialization failed!");
-    return;
+ // To send an SMS, call modem.sendSMS(SMS_TARGET, smsMessage)
+  // String smsMessage = "Hello from ESP32!";
+  // if(modem.sendSMS(SMS_TARGET, smsMessage)){
+  //   SerialMon.println(smsMessage);
+  // }
+  // else{
+  //   SerialMon.println("SMS failed to send");
+  // }
+// initialize();
+if (!htu.begin()) { // Initialize the HTU21D sensor
+    Serial.println("Couldn't find HTU21D sensor!");
+    while (1);
   }
+
+
+
 }
 
 struct pms5003data {
@@ -150,18 +148,48 @@ struct pms5003data data;
 
 void loop()
 {
-bme();
-sht3();
-hdc1();
-htu1();
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= 3000) {
-    WriteFile();
-    previousMillis = currentMillis;
-  }
-Serial.println("*********");
-closeFile();
-air();
+
+float temperature = htu.readTemperature(); // Read temperature data
+  float humidity = htu.readHumidity();       // Read humidity data
+
+  // Print the data to the serial monitor
+  Serial.print("Temperature = ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+
+  Serial.print("Humidity = ");
+  Serial.print(humidity);
+  Serial.println(" %");
+// String str1 = "Humidity ";
+// String str2 = String(humidity);
+// String str3 = "Temperature ";
+// String str4 = String(temperature);
+//  String str5 = "This is the combined code, ithing it will work. I am esp32 sending";
+
+//  String smsMessage = str1+str2+str3+str4+str5;
+//   if(modem.sendSMS(SMS_TARGET, smsMessage)){
+//     SerialMon.println(smsMessage);
+//   }
+//   else{
+//     SerialMon.println("SMS failed to send");
+//   }
+//    while (true) {
+//         modem.maintain();
+//     }
+  delay(1000); // Wait for
+
+// bme();
+// sht3();
+// hdc1();
+// htu1();
+//   unsigned long currentMillis = millis();
+//   if (currentMillis - previousMillis >= 3000) {
+//     WriteFile();
+//     previousMillis = currentMillis;
+//   }
+// Serial.println("*********");
+// closeFile();
+// air();
 }
 
 

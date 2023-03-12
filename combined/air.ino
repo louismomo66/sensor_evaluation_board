@@ -1,6 +1,8 @@
 void air(){
   //  for (int i= 0; i<4; i++){
- if (readPMSdata(&Serial1)) {
+//  if (readPMSdata(&Serial1)) {
+  if (readPMSdata(&mySerial4)) {
+  
     // reading data was successful!
     Serial.println();
     Serial.println("First sensor");
