@@ -2,7 +2,6 @@ void air(){
   //  for (int i= 0; i<4; i++){
 //  if (readPMSdata(&Serial1)) {
   if (readPMSdata(&mySerial4)) {
-  
     // reading data was successful!
     Serial.println();
     Serial.println("First sensor");
@@ -11,7 +10,7 @@ void air(){
     Serial.print("PM 1.0: "); Serial.print(data.pm10_standard);Serial.println("(u/g3)");
     Serial.print("PM 2.5: "); Serial.print(data.pm25_standard);Serial.println("(u/g3)");
     Serial.print("PM 10: "); Serial.print(data.pm100_standard);Serial.println("(u/g3)");
-
+   
     // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
     // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
     // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
@@ -41,7 +40,7 @@ void air(){
     Serial.println("---------------------------------------");
     }
 
-    if (readPMSdata(&Serial)) {
+    if (readPMSdata(&SerialMon)) {
     // reading data was successful!
     Serial.println();
     Serial.println("Third Sensor");
@@ -62,6 +61,57 @@ void air(){
     }
     //  delay(1000);
     // }
+ }
+String air1string(){
+  if (readPMSdata(&mySerial4)) {
+    // reading data was successf
+   String one = "PM 1.0: " + String(data.pm10_standard);
+   String two = "PM 2.5: " + String(data.pm25_standard);
+   String three = "PM 10: " + String(data.pm100_standard);
+
+   String air1 = "One: " + one+ two + three + "(u/g3)";
+    // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
+    // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
+    // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
+    // Serial.print("Particles > 2.5um / 0.1L air:"); Serial.println(data.particles_25um);
+    // Serial.print("Particles > 5.0um / 0.1L air:"); Serial.println(data.particles_50um);
+    // Serial.print("Particles > 10.0 um / 0.1L air:"); Serial.println(data.particles_100um);
+  return air1;
+    }}
+
+String air2string(){
+    if (readPMSdata(&Serial2)) {
+    String one1 = "PM 1.0: " + String(data.pm10_standard);
+   String two2 = "PM 2.5: " + String(data.pm25_standard);
+   String three3 = "PM 10: " + String(data.pm100_standard);
+
+   String air2 = "Two: " + one1+ two2 + three3 + "(u/g3)";
+    // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
+    // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
+    // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
+    // Serial.print("Particles > 2.5um / 0.1L air:"); Serial.println(data.particles_25um);
+    // Serial.print("Particles > 5.0um / 0.1L air:"); Serial.println(data.particles_50um);
+    // Serial.print("Particles > 10.0 um / 0.1L air:"); Serial.println(data.particles_100um);
+   return air2;
+    }}
+
+String air3string(){
+    if (readPMSdata(&SerialMon)) {
+    // reading data was successful!
+  String one11 = "PM 1.0: " + String(data.pm10_standard);
+   String two21 = "PM 2.5: " + String(data.pm25_standard);
+   String three31 = "PM 10: " + String(data.pm100_standard);
+
+   String air3 = "Three: " + one11 + two21 + three31 + "(u/g3)";
+    // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
+    // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
+    // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
+    // Serial.print("Particles > 2.5um / 0.1L air:"); Serial.println(data.particles_25um);
+    // Serial.print("Particles > 5.0um / 0.1L air:"); Serial.println(data.particles_50um);
+    // Serial.print("Particles > 10.0 um / 0.1L air:"); Serial.println(data.particles_100um);
+    return air3;
+    }
+   
  }
 
 boolean readPMSdata(Stream *s) {
