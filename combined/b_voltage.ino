@@ -15,7 +15,7 @@ float voltage(){
   //  Serial.print(adc_average*0.0006099016-0.22);
   //  Serial.println(" mA");
   // Serial.println(voltage*6.191369606-0.18);
-  float bat_volt = voltage*6.191369606-0.18;
+  float bat_volt = voltage*6.191369606;
   // Serial.println(voltage, 3);
   // delay(1000);
   return bat_volt;

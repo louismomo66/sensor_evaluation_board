@@ -66,7 +66,7 @@ const char apn[] = "airtelgprs.com";
 const char gprsUser[] = "";
 const char gprsPass[] = "";
 // MQTT details
-const char *broker = "7.tcp.eu.ngrok.io";
+const char *broker = "5.tcp.eu.ngrok.io";
 const char *topicbme = "topic/bme";
 const char *topicsht = "topic/sht";
 const char *topichdc= "topic/hdc";
@@ -164,9 +164,12 @@ void TCA9548A(uint8_t bus){
   // Serial.print(bus);
 }
 
-File myfile;
-const int CS = 5;
+// File myfile;
+#define SD_CS 5
+String dataMessage;
 
+int Vresistor = 36; // VP pin which is the GPIO36 pin this is adc0
+int Vrdata;
 // #define RXD1 15 // To sensor TXD
 // #define TXD1 4 // To sensor RXD
 SoftwareSerial mySerial4(15, 4); // RX4, TX4
@@ -176,24 +179,33 @@ SoftwareSerial mySerial4(15, 4); // RX4, TX4
 #define RXD3 32 // To sensor TXD
 #define TXD3 33 // To sensor RXD
 
+#define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */ 
+#define TIME_TO_SLEEP 45 /*Time ESP32 will go to sleep (in seconds) */
+
+
 
 void setup() {
   
-  
+  // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
 // uint64_t sleep_time = 600000000;
 Wire.begin();
 mySerial4.begin(9600);
 Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 SerialMon.begin(9600, SERIAL_8N1, RXD3, TXD3);
 pinMode(36,INPUT);
+initialize_sd();
 initialize();
 
+WriteFile();
 // bme();
 // sht3();
 // hdc1();
 // htu1();
 // SerialMon.println("*********");
 // air();
+
+
+
 
 setupModem();
 
@@ -203,10 +215,11 @@ SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX);
 
 delay(6000);
 
-    // Restart takes quite some time
-    // To skip it, call init() instead of restart()
+//     // Restart takes quite some time
+//     // To skip it, call init() instead of restart()
 SerialMon.println("Initializing modem...");
 modem.restart();
+
 
 SerialMon.print("Waiting for network...");
     if (!modem.waitForNetwork()) {
@@ -234,10 +247,11 @@ SerialMon.print("Waiting for network...");
         SerialMon.println("GPRS connected");
     }
 
-    // MQTT Broker setup
-    mqtt.setServer(broker,10960);
+//     // MQTT Broker setup
+    mqtt.setServer(broker,11632);
 
-    
+
+  
     // mqtt.publish(topicLed, "Hello");
   //   String smsMessage = "Hello from ESP32!";
   // if(modem.sendSMS(SMS_TARGET, smsMessage)){
@@ -279,10 +293,14 @@ SerialMon.print("Waiting for network...");
 //  // 60e6 microseconds = 1 minute
 // esp_sleep_enable_timer_wakeup( * 1000000);
 // esp_deep_sleep_start();
-// esp_sleep_enable_timer_wakeup(60 * 1000000); // 1 minute
+// esp_sleep_enable_timer_wakeup(6 * 1000000); // 1 minute
 // esp_deep_sleep_start();
 
-
+// SerialMon.println("Going to sleep now");
+  // delay(1000);
+  // Serial.flush(); 
+  // esp_deep_sleep_start();
+  // SerialMon.println("This will never be printed");
 }
 
 struct pms5003data {
@@ -297,43 +315,47 @@ struct pms5003data data;
 
 void loop()
 {
- if (!mqtt.connected()) {
-    SerialMon.println("=== MQTT NOT CONNECTED ===");
-    // Reconnect every 10 seconds
-    uint32_t t = millis();
-    if (t - lastReconnectAttempt > 10000L) {
-      lastReconnectAttempt = t;
-      if (mqttConnect()) {
-        lastReconnectAttempt = 0;
-      }
-    }
-    delay(100);
-    return;
-  }
-    
-    String bme_all =bmeString();
-    String hdc_all =hdcString();
-    String htu_all =htuString();
-    String sht_all =shtString();
+send_data();
+//  if (!mqtt.connected()) {
+//     SerialMon.println("=== MQTT NOT CONNECTED ===");
+//     // Reconnect every 10 seconds
+//     uint32_t t = millis();
+//     if (t - lastReconnectAttempt > 10000L) {
+//       lastReconnectAttempt = t;
+//       if (mqttConnect()) {
+//         lastReconnectAttempt = 0;
+//       }
+//     }
+//     delay(100);
+//     return;
+//   }
 
-    String air1 =air1string();
-    String air2 =air2string();
-    String air3 =air3string();
-    String volts =String(voltage());
-    mqtt.publish(topicAir1 , air1.c_str());
-    mqtt.publish(topicAir2 , air2.c_str());
-    mqtt.publish(topicAir3 , air3.c_str());
-    // Serial.println(bme_all);
-    mqtt.publish(topicbme, bme_all.c_str());
-    mqtt.publish(topichdc, hdc_all.c_str());
-    mqtt.publish(topichtu, htu_all.c_str());
-    mqtt.publish(topicsht, sht_all.c_str());
-    mqtt.publish(topicb_volt, volts.c_str());
+//     String bme_all =bmeString();
+//     String hdc_all =hdcString();
+//     String htu_all =htuString();
+//     String sht_all =shtString();
+
+//     String air1 =air1string();
+//     String air2 =air2string();
+//     String air3 =air3string();
+//     String volts =String(voltage());
+//     mqtt.publish(topicAir1 , air1.c_str());
+//     mqtt.publish(topicAir2 , air2.c_str());
+//     mqtt.publish(topicAir3 , air3.c_str());
+//     // Serial.println(bme_all);
+//     mqtt.publish(topicbme, bme_all.c_str());
+//     mqtt.publish(topichdc, hdc_all.c_str());
+//     mqtt.publish(topichtu, htu_all.c_str());
+//     mqtt.publish(topicsht, sht_all.c_str());
+//     mqtt.publish(topicb_volt, volts.c_str());
     // mqtt.publish(topicLed, "Hello poeple");
     // voltage();
-    mqtt.loop();
-// float temperature = htu.readTemperature(); // Read temperature data
-//   float humidity = htu.readHumidity();       // Read humidity data
+    // mqtt.loop();
+    
+// // esp_sleep_enable_timer_wakeup(60 * 1000000); // 1 minute
+// // esp_deep_sleep_start();
+// // float temperature = htu.readTemperature(); // Read temperature data
+// //   float humidity = htu.readHumidity();       // Read humidity data
 
 //   // Print the data to the serial monitor
 //   Serial.print("Temperature = ");
@@ -374,21 +396,9 @@ void loop()
 // closeFile();
 // air();
 // delay(1000);
+// esp_sleep_enable_timer_wakeup(6 * 1000000); // 1 minute
+// esp_deep_sleep_start();
 }
-
-
-void closeFile()
-{
-  if (myfile)
-  {
-    myfile.close();
-    Serial.println("File closed");
-  }
-}
-
-
-
-
 
 
 
