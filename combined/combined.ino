@@ -7,7 +7,7 @@
 #include <SD.h>
 #include <ESP32Time.h>
 #include <SoftwareSerial.h>
-#include <esp_sleep.h>
+// #include <esp_sleep.h>
 // #define SIM800L_IP5306_VERSION_20190610
 // // Define the serial console for debug prints, if needed
 // #define DUMP_AT_COMMANDS
@@ -66,11 +66,12 @@ const char apn[] = "airtelgprs.com";
 const char gprsUser[] = "";
 const char gprsPass[] = "";
 // MQTT details
-const char *broker = "5.tcp.eu.ngrok.io";
+const char *broker = "0.tcp.in.ngrok.io";
 const char *topicbme = "topic/bme";
 const char *topicsht = "topic/sht";
 const char *topichdc= "topic/hdc";
 const char *topichtu = "topic/htu";
+const char *status_topic = "topic/status";
 
 const char *topicAir1 = "topic/air1";
 const char *topicAir2= "topic/air2";
@@ -95,27 +96,28 @@ int ledStatus = LOW;
 uint32_t lastReconnectAttempt = 0;
 
 
-boolean mqttConnect() {
-  SerialMon.print("Connecting to ");
-  SerialMon.print(broker);
 
-  // Connect to MQTT Broker without username and password
-  //boolean status = mqtt.connect("GsmClientN");
+// boolean mqttConnect() {
+//   SerialMon.print("Connecting to ");
+//   SerialMon.print(broker);
 
-  // Or, if you want to authenticate MQTT:
-  boolean status = mqtt.connect("GsmClientN");
+//   // Connect to MQTT Broker without username and password
+//   //boolean status = mqtt.connect("GsmClientN");
 
-  if (status == false) {
-    SerialMon.println(" fail");
-    ESP.restart();
-    return false;
-  }
-  SerialMon.println(" success");
-  // mqtt.subscribe(topicOutput1);
-  // mqtt.subscribe(topicOutput2);
+//   // Or, if you want to authenticate MQTT:
+//   boolean status = mqtt.connect("GsmClientN");
 
-  return mqtt.connected();
-}
+//   if (status == false) {
+//     SerialMon.println(" fail");
+//     ESP.restart();
+//     return false;
+//   }
+//   SerialMon.println(" success");
+//   // mqtt.subscribe(topicOutput1);
+//   // mqtt.subscribe(topicOutput2);
+
+//   return mqtt.connected();
+// }
 
 
 
@@ -179,129 +181,6 @@ SoftwareSerial mySerial4(15, 4); // RX4, TX4
 #define RXD3 32 // To sensor TXD
 #define TXD3 33 // To sensor RXD
 
-#define uS_TO_S_FACTOR 1000000 /* Conversion factor for micro seconds to seconds */ 
-#define TIME_TO_SLEEP 45 /*Time ESP32 will go to sleep (in seconds) */
-
-
-
-void setup() {
-  
-  // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-// uint64_t sleep_time = 600000000;
-Wire.begin();
-mySerial4.begin(9600);
-Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
-SerialMon.begin(9600, SERIAL_8N1, RXD3, TXD3);
-pinMode(36,INPUT);
-initialize_sd();
-initialize();
-
-WriteFile();
-// bme();
-// sht3();
-// hdc1();
-// htu1();
-// SerialMon.println("*********");
-// air();
-
-
-
-
-setupModem();
-
-SerialMon.println("Wait...");
-// Set GSM module baud rate and UART pins
-SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX);
-
-delay(6000);
-
-//     // Restart takes quite some time
-//     // To skip it, call init() instead of restart()
-SerialMon.println("Initializing modem...");
-modem.restart();
-
-
-SerialMon.print("Waiting for network...");
-    if (!modem.waitForNetwork()) {
-        SerialMon.println(" fail");
-        delay(10000);
-        return;
-    }
-    SerialMon.println(" success");
-
-    if (modem.isNetworkConnected()) {
-        SerialMon.println("Network connected");
-    }
-
-    // GPRS connection parameters are usually set after network registration
-    SerialMon.print(F("Connecting to "));
-    SerialMon.print(apn);
-    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-        SerialMon.println(" fail");
-        delay(10000);
-        return;
-    }
-    SerialMon.println(" success");
-
-    if (modem.isGprsConnected()) {
-        SerialMon.println("GPRS connected");
-    }
-
-//     // MQTT Broker setup
-    mqtt.setServer(broker,11632);
-
-
-  
-    // mqtt.publish(topicLed, "Hello");
-  //   String smsMessage = "Hello from ESP32!";
-  // if(modem.sendSMS(SMS_TARGET, smsMessage)){
-  //   SerialMon.println(smsMessage);
-  // }
-  // else{
-  //   SerialMon.println("SMS failed to send");
-  // }
-
-
-
-// delay(10);
-// rtc.setTime(10, 15, 17, 10, 3, 2023);  // 17th Jan 2021 15:24:30
-// if (setupPMU() == false) {
-//         Serial.println("Setting power error");
-//     }
-
-// setupModem();
-// SerialAT.begin(115200, SERIAL_8N1, MODEM_RX, MODEM_TX);
-// delay(3000);
-
-// SerialMon.println("Initializing modem...");
-//     modem.restart();
-
- // To send an SMS, call modem.sendSMS(SMS_TARGET, smsMessage)
-  // String smsMessage = "Hello from ESP32!";
-  // if(modem.sendSMS(SMS_TARGET, smsMessage)){
-  //   SerialMon.println(smsMessage);
-  // }
-  // else{
-  //   SerialMon.println("SMS failed to send");
-  // }
-// initialize();
-// if (!htu.begin()) { // Initialize the HTU21D sensor
-//     Serial.println("Couldn't find HTU21D sensor!");
-//     while (1);
-//   }
-// Serial.println("Entering deep sleep mode for 1 minute...");
-//  // 60e6 microseconds = 1 minute
-// esp_sleep_enable_timer_wakeup( * 1000000);
-// esp_deep_sleep_start();
-// esp_sleep_enable_timer_wakeup(6 * 1000000); // 1 minute
-// esp_deep_sleep_start();
-
-// SerialMon.println("Going to sleep now");
-  // delay(1000);
-  // Serial.flush(); 
-  // esp_deep_sleep_start();
-  // SerialMon.println("This will never be printed");
-}
 
 struct pms5003data {
   uint16_t framelen;
@@ -313,92 +192,206 @@ struct pms5003data {
 };
 struct pms5003data data;
 
-void loop()
-{
-send_data();
-//  if (!mqtt.connected()) {
-//     SerialMon.println("=== MQTT NOT CONNECTED ===");
-//     // Reconnect every 10 seconds
-//     uint32_t t = millis();
-//     if (t - lastReconnectAttempt > 10000L) {
-//       lastReconnectAttempt = t;
-//       if (mqttConnect()) {
-//         lastReconnectAttempt = 0;
-//       }
+
+void setup() {
+
+Wire.begin();
+mySerial4.begin(9600);
+Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+SerialMon.begin(9600, SERIAL_8N1, RXD3, TXD3);
+// Serial.begin(9600);
+// pinMode(36,INPUT);
+initialize_sd();
+initialize();
+WriteFile();
+setupModem();
+
+unsigned long start_time = 0; // declare a variable to store the start time
+
+SerialMon.println("Wait...");
+
+// Set GSM module baud rate and UART pins
+SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX);
+
+start_time = millis(); // record the start time
+
+// Wait for 6 seconds before initializing the modem
+while (millis() - start_time < 6000) {}
+
+SerialMon.println("Initializing modem...");
+modem.restart();
+
+SerialMon.print("Waiting for network...");
+
+start_time = millis(); // record the start time
+
+while (!modem.waitForNetwork()) {
+  if (millis() - start_time > 10000) { // exit the loop after 10 seconds
+    SerialMon.println(" fail");
+    return;
+  }
+}
+
+SerialMon.println(" success");
+
+if (modem.isNetworkConnected()) {
+  SerialMon.println("Network connected");
+}
+
+// GPRS connection parameters are usually set after network registration
+SerialMon.print(F("Connecting to "));
+SerialMon.print(apn);
+
+start_time = millis(); // record the start time
+
+while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+  if (millis() - start_time > 10000) { // exit the loop after 10 seconds
+    SerialMon.println(" fail");
+    return;
+  }
+}
+
+SerialMon.println(" success");
+
+if (modem.isGprsConnected()) {
+  SerialMon.println("GPRS connected");
+}
+
+
+// SerialMon.println("Wait...");
+// // // Set GSM module baud rate and UART pins
+
+// SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX);
+
+// delay(6000);
+
+// // //     // Restart takes quite some time
+// // //    // To skip it, call init() instead of restart()
+// SerialMon.println("Initializing modem...");
+// modem.restart();
+
+
+// SerialMon.print("Waiting for network...");
+//     if (!modem.waitForNetwork()) {
+//         SerialMon.println(" fail");
+//         delay(10000);
+//         return;
 //     }
-//     delay(100);
-//     return;
-//   }
+//     SerialMon.println(" success");
 
-//     String bme_all =bmeString();
-//     String hdc_all =hdcString();
-//     String htu_all =htuString();
-//     String sht_all =shtString();
-
-//     String air1 =air1string();
-//     String air2 =air2string();
-//     String air3 =air3string();
-//     String volts =String(voltage());
-//     mqtt.publish(topicAir1 , air1.c_str());
-//     mqtt.publish(topicAir2 , air2.c_str());
-//     mqtt.publish(topicAir3 , air3.c_str());
-//     // Serial.println(bme_all);
-//     mqtt.publish(topicbme, bme_all.c_str());
-//     mqtt.publish(topichdc, hdc_all.c_str());
-//     mqtt.publish(topichtu, htu_all.c_str());
-//     mqtt.publish(topicsht, sht_all.c_str());
-//     mqtt.publish(topicb_volt, volts.c_str());
-    // mqtt.publish(topicLed, "Hello poeple");
-    // voltage();
-    // mqtt.loop();
-    
-// // esp_sleep_enable_timer_wakeup(60 * 1000000); // 1 minute
-// // esp_deep_sleep_start();
-// // float temperature = htu.readTemperature(); // Read temperature data
-// //   float humidity = htu.readHumidity();       // Read humidity data
-
-//   // Print the data to the serial monitor
-//   Serial.print("Temperature = ");
-//   Serial.print(temperature);
-//   Serial.println(" °C");
-
-//   Serial.print("Humidity = ");
-//   Serial.print(humidity);
-//   Serial.println(" %");
-// String str1 = "Humidity ";
-// String str2 = String(humidity);
-// String str3 = "Temperature ";
-// String str4 = String(temperature);
-//  String str5 = "This is the combined code, ithing it will work. I am esp32 sending";
-
-//  String smsMessage = str1+str2+str3+str4+str5;
-//   if(modem.sendSMS(SMS_TARGET, smsMessage)){
-//     SerialMon.println(smsMessage);
-//   }
-//   else{
-//     SerialMon.println("SMS failed to send");
-//   }
-//    while (true) {
-//         modem.maintain();
+//     if (modem.isNetworkConnected()) {
+//         SerialMon.println("Network connected");
 //     }
-  // delay(1000); // Wait for
 
+//     // GPRS connection parameters are usually set after network registration
+//     SerialMon.print(F("Connecting to "));
+//     SerialMon.print(apn);
+//     if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+//         SerialMon.println(" fail");
+//         delay(10000);
+//         return;
+//     }
+//     SerialMon.println(" success");
+
+//     if (modem.isGprsConnected()) {
+//         SerialMon.println("GPRS connected");
+//     }
+
+    // MQTT Broker setup
+mqtt.setServer(broker,12457);
+if(!mqtt.connected()){
+  reconnect();
+}
+mqtt.loop();
+// air();
 // bme();
-// sht3();
 // hdc1();
 // htu1();
-//   unsigned long currentMillis = millis();
-//   if (currentMillis - previousMillis >= 3000) {
-//     WriteFile();
-//     previousMillis = currentMillis;
-//   }
-// Serial.println("*********");
-// closeFile();
+// sht3();
+send_data();
+Serial.println("************");
 // air();
-// delay(1000);
-// esp_sleep_enable_timer_wakeup(6 * 1000000); // 1 minute
+// send_data();
+// rtc.setTime(10, 15, 17, 10, 3, 2023);  // 17th Jan 2021 15:24:30
+
+ // To send an SMS, call modem.sendSMS(SMS_TARGET, smsMessage)
+  // String smsMessage = "Hello from ESP32!";
+  // if(modem.sendSMS(SMS_TARGET, smsMessage)){
+  //   SerialMon.println(smsMessage);
+  // }
+  // else{
+  //   SerialMon.println("SMS failed to send");
+  // }
+
+// Serial.println("Entering deep sleep mode for 1 minute...");
+//  // 60e6 microseconds = 1 minute
+// esp_sleep_enable_timer_wakeup( * 1000000);
 // esp_deep_sleep_start();
+ // 1 minute
+// digitalWrite(MODEM_POWER_ON, HIGH);
+// Serial.println("Going to sleep now");
+// delay(5000);
+esp_sleep_enable_timer_wakeup(45 * 1000000);
+esp_deep_sleep_start();
+
+
 }
 
 
 
+void loop()
+{
+
+
+}
+void reconnect(){
+
+unsigned long start_time = 0; // declare a variable to store the start time
+int delay_time = 5000; // set the delay time to 5 seconds
+
+while (!mqtt.connected()) {
+    SerialMon.println("=== Attempting Connection... ===");
+
+    start_time = millis(); // record the start time
+
+    // Reconnect every 10 seconds
+    String clientId = "ESP8266-";
+    clientId += String(random(0xffff), HEX);
+
+    if (mqtt.connect(clientId.c_str())){
+        Serial.println("Connected");
+        mqtt.publish(status_topic, "ESP32 Alive");
+    } else {
+        Serial.println(mqtt.state());
+    }
+
+    // wait for the remaining time in the delay period
+    while (millis() - start_time < delay_time) {}
+}
+
+
+// while (!mqtt.connected()) {
+//     SerialMon.println("=== Attempting Connection... ===");
+//     // Reconnect every 10 seconds
+//     String clientId = "ESP8266-";
+//     clientId += String(random(0xffff),HEX);
+// if (mqtt.connect(clientId.c_str())){
+//   Serial.println("Connected");
+//   mqtt.publish(status_topic,"ESP32 Alive");
+// }else{
+//   Serial.println(mqtt.state());
+//   delay(5000);
+// }
+//  }
+
+  //   uint32_t t = millis();
+  //   if (t - lastReconnectAttempt > 10000L) {
+  //     lastReconnectAttempt = t;
+  //     if (mqttConnect()) {
+  //       lastReconnectAttempt = 0;
+  //     }
+  //   }
+  //   delay(100);
+  //   return;
+  // }
+}

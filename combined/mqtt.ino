@@ -1,17 +1,17 @@
 void send_data(){
-   if (!mqtt.connected()) {
-    SerialMon.println("=== MQTT NOT CONNECTED ===");
-    // Reconnect every 10 seconds
-    uint32_t t = millis();
-    if (t - lastReconnectAttempt > 10000L) {
-      lastReconnectAttempt = t;
-      if (mqttConnect()) {
-        lastReconnectAttempt = 0;
-      }
-    }
-    delay(100);
-    return;
-  }
+  //  if (!mqtt.connected()) {
+  //   SerialMon.println("=== MQTT NOT CONNECTED ===");
+  //   // Reconnect every 10 seconds
+  //   uint32_t t = millis();
+  //   if (t - lastReconnectAttempt > 10000L) {
+  //     lastReconnectAttempt = t;
+  //     if (mqttConnect()) {
+  //       lastReconnectAttempt = 0;
+  //     }
+  //   }
+  //   delay(100);
+  //   return;
+  // }
 
     String bme_all =bmeString();
     String hdc_all =hdcString();
