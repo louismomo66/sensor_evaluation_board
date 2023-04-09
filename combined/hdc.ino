@@ -23,17 +23,17 @@ String hdcString() {
   TCA9548A(1);
   float hdc1T = hdc.readTemperature();
   float hdc1H = hdc.readHumidity();
-  String hdc1 = "HDC1 " + String(hdc1T) + " deg.C, " + String(hdc1H) + " %, ";
+  String hdc1 = "HDC1 " + String(hdc1T) + " " + String(hdc1H) + " ";
 
   TCA9548A(2);
   float hdc2T = hdc.readTemperature();
   float hdc2H = hdc.readHumidity();
-  String hdc2 = "HDC2 " + String(hdc2T) + " deg.C, " + String(hdc2H) + " %, ";
+  String hdc2 = "HDC2 " + String(hdc2T) + " " + String(hdc2H) + " ";
 
   TCA9548A(3);
   float hdc3T = hdc.readTemperature();
   float hdc3H = hdc.readHumidity();
-  String hdc3 = "HDC3 " + String(hdc3T) + " deg.C, " + String(hdc3H) + " %";
+  String hdc3 = "HDC3 " + String(hdc3T) + " " + String(hdc3H);
 
   // delay(2000);
 

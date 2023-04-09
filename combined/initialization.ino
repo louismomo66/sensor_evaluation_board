@@ -1,4 +1,19 @@
 void initialize(){
+ pms1.wake();
+ pms2.wake();
+ pms3.wake();
+ delay(3000);
+  // pms1.init();
+  // pms2.init();
+  // pms3.init();
+
+  // Wake up all sensors
+  
+  
+   
+
+   delay(6000);
+
 TCA9548A(1);
 if (!bmp.begin(0x76)){
 Serial.println("Sensor bme1 fail") ; 
@@ -55,4 +70,12 @@ if (!htu.begin()){
 Serial.println("Sensor htu 3 fail") ; 
 while(1);
 }
+TCA9548A(7);
+  if (!ads.begin()) {
+    Serial.println("Failed to initialize ADS.");
+    while (1);
+  }
+ ads.setGain(GAIN_TWOTHIRDS);
+
+
 }

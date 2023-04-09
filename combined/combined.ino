@@ -5,8 +5,15 @@
 #include "Adafruit_SHT31.h"
 #include "Adafruit_HTU21DF.h"
 #include <SD.h>
+#include <HardwareSerial.h>
 #include <ESP32Time.h>
+// #include <SoftwareSerial.h>
+#include <Adafruit_ADS1X15.h>
+#include <EEPROM.h>
+#ifndef ESP32
 #include <SoftwareSerial.h>
+#endif
+#include <PMserial.h> // Arduino library for PM sensors with serial interfacerduino library for PM sensors with serial interface
 // #include <esp_sleep.h>
 // #define SIM800L_IP5306_VERSION_20190610
 // // Define the serial console for debug prints, if needed
@@ -48,7 +55,7 @@
 #define SerialMon Serial
 // Set serial for AT commands (to the module)
 // Use Hardware Serial on Mega, Leonardo, Micro
-#define TINY_GSM_RX_BUFFER   1024  
+// #define TINY_GSM_RX_BUFFER   1024  
 #define SerialAT Serial1
 // See all AT commands, if wanted
 //#define DUMP_AT_COMMANDS
@@ -66,7 +73,7 @@ const char apn[] = "airtelgprs.com";
 const char gprsUser[] = "";
 const char gprsPass[] = "";
 // MQTT details
-const char *broker = "0.tcp.in.ngrok.io";
+const char *broker = "0.tcp.ngrok.io";
 const char *topicbme = "topic/bme";
 const char *topicsht = "topic/sht";
 const char *topichdc= "topic/hdc";
@@ -77,9 +84,10 @@ const char *topicAir1 = "topic/air1";
 const char *topicAir2= "topic/air2";
 const char *topicAir3 = "topic/air3";
 const char *topicb_volt = "topic/b_voltage";
+const char *topicb_curent = "topic/current";
 #include <TinyGsmClient.h>
 #include <PubSubClient.h>
-
+Adafruit_ADS1115 ads;
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
 StreamDebugger debugger(SerialAT, SerialMon);
@@ -91,7 +99,7 @@ TinyGsm modem(SerialAT);
 TinyGsmClient client(modem);
 PubSubClient mqtt(client);
 
-int ledStatus = LOW;
+
 
 uint32_t lastReconnectAttempt = 0;
 
@@ -119,6 +127,10 @@ uint32_t lastReconnectAttempt = 0;
 //   return mqtt.connected();
 // }
 
+float current1 = 0;
+int16_t adc0;
+float volts0;
+float sensitivity = 40.00;
 
 
 
@@ -170,42 +182,62 @@ void TCA9548A(uint8_t bus){
 #define SD_CS 5
 String dataMessage;
 
-int Vresistor = 36; // VP pin which is the GPIO36 pin this is adc0
-int Vrdata;
-// #define RXD1 15 // To sensor TXD
-// #define TXD1 4 // To sensor RXD
-SoftwareSerial mySerial4(15, 4); // RX4, TX4
-#define RXD2 12 // To sensor TXD
+
+#define RXD1 15 // To sensor TXD
+#define TXD1 0 // To sensor RXD
+// HardwareSerial mySerial4(0); // RX4, TX4
+#define RXD2 4 // To sensor TXD
 #define TXD2 14 // To sensor RXD
 
 #define RXD3 32 // To sensor TXD
 #define TXD3 33 // To sensor RXD
 
+// SoftwareSerial mySerial4(15, 4);
+// #ifndef ESP32
 
-struct pms5003data {
-  uint16_t framelen;
-  uint16_t pm10_standard, pm25_standard, pm100_standard;
-  uint16_t pm10_env, pm25_env, pm100_env;
-  uint16_t particles_03um, particles_05um, particles_10um, particles_25um, particles_50um, particles_100um;
-  uint16_t unused;
-  uint16_t checksum;
-};
-struct pms5003data data;
+// SerialPM pms1(PMSA003, mySerial4);
+// #else
+SerialPM pms1(PMS7003, Serial) ;// PMSx003, RX, TX
+// #endif
+SerialPM pms2(PMS7003, Serial1); // PMSx003, RX, TX
+SerialPM pms3(PMS7003, Serial2); 
+
+// struct pms5003data {
+//   uint16_t framelen;
+//   uint16_t pm10_standard, pm25_standard, pm100_standard;
+//   uint16_t pm10_env, pm25_env, pm100_env;
+//   uint16_t particles_03um, particles_05um, particles_10um, particles_25um, particles_50um, particles_100um;
+//   uint16_t unused;
+//   uint16_t checksum;
+// };
+// struct pms5003data data;
 
 
 void setup() {
-
+EEPROM.begin(512);
 Wire.begin();
-mySerial4.begin(9600);
+// mySerial4.begin(9600);
+
+Serial1.begin(9600, SERIAL_8N1, RXD3, TXD3);
 Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
-SerialMon.begin(9600, SERIAL_8N1, RXD3, TXD3);
+Serial.begin(9600,SERIAL_8N1, RXD1, TXD1);
+Serial.println("Started");
+//  pms1.wake();
+//  pms2.wake();
+//  pms3.wake();
 // Serial.begin(9600);
+
 // pinMode(36,INPUT);
 initialize_sd();
 initialize();
 WriteFile();
-setupModem();
+// readsd();
+// air();
+voltage();
 
+// voltage();
+setupModem();
+ 
 unsigned long start_time = 0; // declare a variable to store the start time
 
 SerialMon.println("Wait...");
@@ -216,46 +248,46 @@ SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX);
 start_time = millis(); // record the start time
 
 // Wait for 6 seconds before initializing the modem
-while (millis() - start_time < 6000) {}
+// while (millis() - start_time < 1000) {}
 
 SerialMon.println("Initializing modem...");
 modem.restart();
 
-SerialMon.print("Waiting for network...");
+// SerialMon.print("Waiting for network...");
 
-start_time = millis(); // record the start time
+// start_time = millis(); // record the start time
 
-while (!modem.waitForNetwork()) {
-  if (millis() - start_time > 10000) { // exit the loop after 10 seconds
-    SerialMon.println(" fail");
-    return;
-  }
-}
+// while (!modem.waitForNetwork()) {
+//   if (millis() - start_time > 10000) { // exit the loop after 10 seconds
+//     SerialMon.println(" fail");
+//     return;
+//   }
+// }
 
 SerialMon.println(" success");
 
-if (modem.isNetworkConnected()) {
-  SerialMon.println("Network connected");
-}
+// if (modem.isNetworkConnected()) {
+//   // SerialMon.println("Network connected");
+// }
 
 // GPRS connection parameters are usually set after network registration
-SerialMon.print(F("Connecting to "));
-SerialMon.print(apn);
+// SerialMon.print(F("Connecting to "));
+// SerialMon.print(apn);
 
 start_time = millis(); // record the start time
 
 while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-  if (millis() - start_time > 10000) { // exit the loop after 10 seconds
+  if (millis() - start_time > 4000) { // exit the loop after 10 seconds
     SerialMon.println(" fail");
     return;
   }
 }
 
-SerialMon.println(" success");
+// SerialMon.println(" success");
 
-if (modem.isGprsConnected()) {
-  SerialMon.println("GPRS connected");
-}
+// if (modem.isGprsConnected()) {
+//   SerialMon.println("GPRS connected");
+// }
 
 
 // SerialMon.println("Wait...");
@@ -297,21 +329,15 @@ if (modem.isGprsConnected()) {
 //         SerialMon.println("GPRS connected");
 //     }
 
+// readsd();
     // MQTT Broker setup
-mqtt.setServer(broker,12457);
+mqtt.setServer(broker,18036);
 if(!mqtt.connected()){
   reconnect();
 }
+
 mqtt.loop();
-// air();
-// bme();
-// hdc1();
-// htu1();
-// sht3();
 send_data();
-Serial.println("************");
-// air();
-// send_data();
 // rtc.setTime(10, 15, 17, 10, 3, 2023);  // 17th Jan 2021 15:24:30
 
  // To send an SMS, call modem.sendSMS(SMS_TARGET, smsMessage)
@@ -331,7 +357,14 @@ Serial.println("************");
 // digitalWrite(MODEM_POWER_ON, HIGH);
 // Serial.println("Going to sleep now");
 // delay(5000);
-esp_sleep_enable_timer_wakeup(45 * 1000000);
+//  Put all sensors to sleep
+// modem.sendAT(GF("+CPOWD=1"));
+  modem.sendAT(GF("+CPOWD=1"));
+  pms1.sleep();
+  pms2.sleep();
+  pms3.sleep(); 
+  Serial.print("Sleep");
+esp_sleep_enable_timer_wakeup(20 * 1000000);
 esp_deep_sleep_start();
 
 
@@ -342,7 +375,14 @@ esp_deep_sleep_start();
 void loop()
 {
 
-
+// send_data();
+// mqtt.loop();
+// pms2.sleep();
+// pms3.sleep(); 
+// pms1.sleep();
+// modem.sendAT(GF("+CPOWD=1"));
+// esp_deep_sleep_start();
+// Serial.println("Printed");
 }
 void reconnect(){
 
@@ -370,18 +410,6 @@ while (!mqtt.connected()) {
 }
 
 
-// while (!mqtt.connected()) {
-//     SerialMon.println("=== Attempting Connection... ===");
-//     // Reconnect every 10 seconds
-//     String clientId = "ESP8266-";
-//     clientId += String(random(0xffff),HEX);
-// if (mqtt.connect(clientId.c_str())){
-//   Serial.println("Connected");
-//   mqtt.publish(status_topic,"ESP32 Alive");
-// }else{
-//   Serial.println(mqtt.state());
-//   delay(5000);
-// }
 //  }
 
   //   uint32_t t = millis();

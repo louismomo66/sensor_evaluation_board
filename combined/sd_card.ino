@@ -15,6 +15,7 @@ void initialize_sd(){
     return;    // init failed
   }
   File myfile = SD.open("/sensors.csv");
+    File myfile2 = SD.open("/air.csv");
    if(!myfile) {
     Serial.println("File doens't exist");
     Serial.println("Creating file...");
@@ -23,7 +24,16 @@ void initialize_sd(){
   else {
     Serial.println("File already exists");  
   }
+  if(!myfile2){
+    Serial.println("File doens't exist");
+    Serial.println("Creating file...");
+    writeFile(SD, "/air.csv", "ESP32 Air data \r\n");
+  }
+  else {
+    Serial.println("File already exists");  
+  }
   myfile.close();
+  myfile2.close();
 }
 
 
@@ -43,12 +53,20 @@ void WriteFile(){
 //   // myfile = SD.open("/sensors.csv", FILE_WRITE);
 //   // if the file opened okay, write to it:
 //   // if (myfile) {
+    String air_1 = air1string();
+    String air_2 =air2string();
+    String air_3 =air3string();
+    String dataMessage2 = air_1 + "\n" + air_2 + "\n" + air_3 +"\n" ;
+    appendFile(SD, "/air.csv", dataMessage2.c_str());
+
     String bme_all =bmeString();
     String hdc_all =hdcString();
     String htu_all =htuString();
     String sht_all =shtString();
     String dataMessage = bme_all + "\n" + hdc_all + "\n" + htu_all + "\n" + sht_all + "\n";
     appendFile(SD, "/sensors.csv", dataMessage.c_str());
+
+    
       // myfile.println(rtc.getDateTime(true));
   // }
 //   //     myfile.println("SHT");
@@ -131,8 +149,13 @@ void WriteFile(){
 void writeFile(fs::FS &fs, const char * path, const char * message) {
   Serial.printf("Writing file: %s\n", path);
   File myfile = fs.open(path, FILE_WRITE);
+  File myfile2 = fs.open(path, FILE_WRITE);
   if(!myfile) {
     Serial.println("Failed to open file for writing");
+    return;
+  }
+  if(!myfile2){
+     Serial.println("Failed to open file for writing");
     return;
   }
   if(myfile.print(message)) {
@@ -140,14 +163,26 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
   } else {
     Serial.println("Write failed");
   }
+  if(myfile2.print(message)){
+    Serial.println("File air written");
+  }
+  else {
+    Serial.println("Write failed");
+  }
   myfile.close();
+  myfile2.close();
 }
 // Append data to the SD card (DON'T MODIFY THIS FUNCTION)
 void appendFile(fs::FS &fs, const char * path, const char * message) {
   Serial.printf("Appending to file: %s\n", path);
   File myfile = fs.open(path, FILE_APPEND);
+  File myfile2 = fs.open(path, FILE_APPEND);
   if(!myfile) {
     Serial.println("Failed to open file for appending");
+    return;
+  }
+  if(!myfile2){
+     Serial.println("Failed to open file for appending");
     return;
   }
   if(myfile.print(message)) {
@@ -155,9 +190,15 @@ void appendFile(fs::FS &fs, const char * path, const char * message) {
   } else {
     Serial.println("Append failed");
   }
+  if(myfile2.print(message)){
+    Serial.println("File air appended");
+  }
+  else {
+    Serial.println("Append failed");
+  }
   myfile.close();
+  myfile2.close();
 }
-
 // void closeFile()
 // {
 //   if (myfile)
@@ -166,3 +207,20 @@ void appendFile(fs::FS &fs, const char * path, const char * message) {
 //     Serial.println("File closed");
 //   }
 // }
+void readsd(){
+  File myfile2 = SD.open("/air.csv");
+  if (myfile2) {
+    Serial.println("File opened successfully:");
+    
+    // Read file contents
+    while (myfile2.available()) {
+      Serial.write(myfile2.read());
+    }
+    
+    // Close file
+    myfile2.close();
+    Serial.println("\nFile closed.");
+  } else {
+    Serial.println("Error opening file!");
+  }
+}

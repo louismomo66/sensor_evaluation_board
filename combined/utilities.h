@@ -14,7 +14,7 @@
 #define I2C_SDA              21
 #define I2C_SCL              22
 #define LED_GPIO             13
-#define LED_ON               HIGH
+#define LED_ON               LOW
 #define LED_OFF              LOW
 
 #define IP5306_ADDR          0x75
