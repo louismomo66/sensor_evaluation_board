@@ -73,7 +73,8 @@ const char apn[] = "airtelgprs.com";
 const char gprsUser[] = "";
 const char gprsPass[] = "";
 // MQTT details
-const char *broker = "0.tcp.ngrok.io";
+// const char *broker = "0.tcp.ngrok.io";
+const char *broker = "137.63.185.130";
 const char *topicbme = "topic/bme";
 const char *topicsht = "topic/sht";
 const char *topichdc= "topic/hdc";
@@ -331,7 +332,7 @@ while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
 
 // readsd();
     // MQTT Broker setup
-mqtt.setServer(broker,18036);
+mqtt.setServer(broker,1883);
 if(!mqtt.connected()){
   reconnect();
 }
