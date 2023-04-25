@@ -114,7 +114,7 @@ String air1string(){
     String two = "PM2.5: " + String(pms1.pm25);
     String three = "PM10: " + String(pms1.pm10);
 
-    String air1 = "One: " + one +" "+ two +" "+ three;
+    String air1 = "One:," + one +","+ two +","+ three;
     // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
     // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
     // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
@@ -133,7 +133,7 @@ String air2string(){
     String three3 = "PM10: " + String(pms2.pm10);
 
     // String air2 = "Two: " + one1+ two2 + three3 + "(u/m3)";
-    String air2= "Two: " + one1 +" "+ two2 +" "+ three3;
+    String air2= "Two:, " + one1 +","+ two2 +","+ three3;
     // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
     // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
     // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
@@ -153,7 +153,7 @@ String air3string(){
     String three33 = "PM10: " + String(pms3.pm10);
 
     // String air3 = "Three: " + one11+ two22 + three33 + "(u/m3)";
-    String air3 = "Three: " + one11 +" "+ two22 +" "+ three33;
+    String air3 = "Three:," + one11 +","+ two22 +","+ three33;
     // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
     // Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
     // Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);

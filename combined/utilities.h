@@ -73,7 +73,7 @@ bool setupPMU()
 
 #define MODEM_RST             5
 #define MODEM_PWRKEY          4
-#define MODEM_POWER_ON       23
+#define MODEM_POWER_ON       2
 #define MODEM_TX             27
 #define MODEM_RX             26
 

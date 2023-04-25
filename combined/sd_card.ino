@@ -1,6 +1,9 @@
 void initialize_sd(){
-   SD.begin(SD_CS);  
-  if(!SD.begin(SD_CS)) {
+
+  //  SD.begin(SD_CS);  
+  // if(!SD.begin(SD_CS)) {
+    sdSPI.begin(SCK, MISO, MOSI, CS);
+      if (!SD.begin(CS, sdSPI)) {                // Check SD card
     Serial.println("Card Mount Failed");
     return;
   }
@@ -53,97 +56,29 @@ void WriteFile(){
 //   // myfile = SD.open("/sensors.csv", FILE_WRITE);
 //   // if the file opened okay, write to it:
 //   // if (myfile) {
+   struct tm timeinfo;  // time struct
+   if(!getLocalTime(&timeinfo)){
+    Serial.println("failed to obtain time");
+    return;
+  }
+  char strftime_buf[64];
+  strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
     String air_1 = air1string();
     String air_2 =air2string();
     String air_3 =air3string();
-    String dataMessage2 = air_1 + "\n" + air_2 + "\n" + air_3 +"\n" ;
+    String dataMessage2 = ","+air_1 + "\n" + ","+air_2 + "\n" +","+ air_3 +"\n" ;
+    appendFile(SD, "/air.csv",strftime_buf);
     appendFile(SD, "/air.csv", dataMessage2.c_str());
 
     String bme_all =bmeString();
     String hdc_all =hdcString();
     String htu_all =htuString();
     String sht_all =shtString();
-    String dataMessage = bme_all + "\n" + hdc_all + "\n" + htu_all + "\n" + sht_all + "\n";
+    String dataMessage = ","+bme_all + "\n" + ","+hdc_all + "\n" + ","+htu_all + "\n" + ","+sht_all + "\n";
+    appendFile(SD, "/sensors.csv",strftime_buf);
     appendFile(SD, "/sensors.csv", dataMessage.c_str());
 
-    
-      // myfile.println(rtc.getDateTime(true));
-  // }
-//   //     myfile.println("SHT");
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(sht1T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(sht1H);
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(sht2T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(sht2H);
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(sht3T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(sht3H);
-//   //     myfile.print(",");
-//   //     myfile.println("BME");
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(bme1T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(bme1H);
-//   //      myfile.print("TEMP: ");
-//   //     myfile.print(bme2T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(bme2H);
-//   //      myfile.print("TEMP: ");
-//   //     myfile.print(bme3T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(bme3H);
-//   //    myfile.print(",");
-//   //     myfile.println("HDC");
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(hdc1T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(hdc1H);
-//   //      myfile.print("TEMP: ");
-//   //     myfile.print(hdc2T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(hdc2H);
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(hdc3T);
-//   //      myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(hdc3H);
-//   //     myfile.print(",");
-//   //     myfile.println("HDC");
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(htu1T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(htu1H);
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(htu2T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(htu2H);
-//   //     myfile.print("TEMP: ");
-//   //     myfile.print(htu3T);
-//   //     myfile.print(" ");
-//   //     myfile.print("HUM: ");
-//   //     myfile.println(htu3H);
-//   //    myfile.close();
-//   //   Serial.println("completed.");
-//   // } 
-//   // // if the file didn't open, print an error:
-//   // else {
-//   //   Serial.println("error opening file ");
-    
-//   // }
 }
 
 void writeFile(fs::FS &fs, const char * path, const char * message) {
@@ -223,4 +158,42 @@ void readsd(){
   } else {
     Serial.println("Error opening file!");
   }
+
+   File myfile = SD.open("/sensors.csv");
+  if (myfile) {
+    Serial.println("File opened successfully:");
+    
+    // Read file contents
+    while (myfile.available()) {
+      Serial.write(myfile.read());
+    }
+    
+    // Close file
+    myfile.close();
+    Serial.println("\nFile closed.");
+  } else {
+    Serial.println("Error opening file!");
+  }
 }
+
+void readlast(){
+   File myfile = SD.open("/sensors.csv");
+   if (myfile) {
+    String lastEntry;
+    int fileSize = myfile.size();
+    if (fileSize > 0) {
+      myfile.seek(fileSize - 1); // seek to the last byte in the file
+      char c = myfile.read(); // read the last byte in the file
+      while (c != '\n' && myfile.position() > 0) { // read the rest of the last line
+        lastEntry = c + lastEntry;
+        myfile.seek(myfile.position() - 1);
+        c = myfile.read();
+      }
+      Serial.println(lastEntry); // print the last line to the serial monitor
+    }
+    myfile.close(); // close the file
+  } else {
+    Serial.println("Error opening file");
+  }
+}
+

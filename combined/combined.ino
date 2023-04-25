@@ -1,12 +1,14 @@
 #include <Wire.h>
 #include <SPI.h>
+#include <WiFi.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_HDC1000.h>
 #include "Adafruit_SHT31.h"
 #include "Adafruit_HTU21DF.h"
 #include <SD.h>
+#include "FS.h"
 #include <HardwareSerial.h>
-#include <ESP32Time.h>
+#include "time.h"
 // #include <SoftwareSerial.h>
 #include <Adafruit_ADS1X15.h>
 #include <EEPROM.h>
@@ -15,33 +17,15 @@
 #endif
 #include <PMserial.h> // Arduino library for PM sensors with serial interfacerduino library for PM sensors with serial interface
 // #include <esp_sleep.h>
-// #define SIM800L_IP5306_VERSION_20190610
-// // Define the serial console for debug prints, if needed
-// #define DUMP_AT_COMMANDS
-// #define TINY_GSM_DEBUG          SerialMon
-// #include "utilities.h"
-// // Set serial for debug console (to the Serial Monitor, default speed 115200)
-// #define SerialMon Serial
-// // Set serial for AT commands (to the module)
-// #define SerialAT  Serial1
 
-// // Configure TinyGSM library
-// #define TINY_GSM_MODEM_SIM800          // Modem is SIM800
-// #define TINY_GSM_RX_BUFFER      1024   // Set RX buffer to 1Kb
-
-// #include <TinyGsmClient.h>
-
-// #ifdef DUMP_AT_COMMANDS
-// #include <StreamDebugger.h>
-// StreamDebugger debugger(SerialAT, SerialMon);
-// TinyGsm modem(debugger);
-// #else
-// TinyGsm modem(SerialAT);
-// #endif
-// // Set phone numbers, if you want to test SMS and Calls
-#define SMS_TARGET  "+256787239229"
+// #define SMS_TARGET  "+256787239229"
 // #define CALL_TARGET "+256788509024"
 
+SPIClass sdSPI(HSPI);
+#define SCK  18 //yellow
+#define MISO 19 //blue
+#define MOSI 23 //green
+#define CS  5 //orange
 
  #define SIM800L_IP5306_VERSION_20190610
 // #define SIM800L_AXP192_VERSION_20200327
@@ -170,7 +154,7 @@ Adafruit_HDC1000 hdc;
   float hdc3H;
 
 
-ESP32Time rtc(3600);
+// ESP32Time rtc(3600);
 
 void TCA9548A(uint8_t bus){
   Wire.beginTransmission(0x70);  // TCA9548A address
@@ -213,8 +197,25 @@ SerialPM pms3(PMS7003, Serial2);
 // };
 // struct pms5003data data;
 
+const char* ssid       = "kl";
+const char* password   = "9999999990";
+const char* ntpServer = "de.pool.ntp.org";
+const char* timeZone = "EAT-3";  // UTC
+struct tm timeinfo;  // time struct
+
+
+
 
 void setup() {
+if (!getLocalTime(&timeinfo)) {
+    Serial.println("RTC is not set");
+    // set time via NTP 
+    getNtpTime();    
+  }
+setTimezone(); 
+  Serial.print("current time: ");
+  printLocalTime();
+
 EEPROM.begin(512);
 Wire.begin();
 // mySerial4.begin(9600);
@@ -229,11 +230,14 @@ Serial.println("Started");
 // Serial.begin(9600);
 
 // pinMode(36,INPUT);
-initialize_sd();
+
 initialize();
+
+initialize_sd();
 WriteFile();
 // readsd();
-// air();
+// readlast();
+air();
 voltage();
 
 // voltage();
@@ -316,23 +320,24 @@ while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
 //         SerialMon.println("Network connected");
 //     }
 
-//     // GPRS connection parameters are usually set after network registration
-//     SerialMon.print(F("Connecting to "));
-//     SerialMon.print(apn);
-//     if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-//         SerialMon.println(" fail");
-//         delay(10000);
-//         return;
-//     }
-//     SerialMon.println(" success");
+    // GPRS connection parameters are usually set after network registration
+    SerialMon.print(F("Connecting to "));
+    SerialMon.print(apn);
+    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+        SerialMon.println(" fail");
+        delay(10000);
+        return;
+    }
+    SerialMon.println(" success");
 
-//     if (modem.isGprsConnected()) {
-//         SerialMon.println("GPRS connected");
-//     }
+    if (modem.isGprsConnected()) {
+        SerialMon.println("GPRS connected");
+    }
 
 // readsd();
     // MQTT Broker setup
-mqtt.setServer(broker,1883);
+    
+mqtt.setServer(broker,8383);
 if(!mqtt.connected()){
   reconnect();
 }
@@ -376,14 +381,6 @@ esp_deep_sleep_start();
 void loop()
 {
 
-// send_data();
-// mqtt.loop();
-// pms2.sleep();
-// pms3.sleep(); 
-// pms1.sleep();
-// modem.sendAT(GF("+CPOWD=1"));
-// esp_deep_sleep_start();
-// Serial.println("Printed");
 }
 void reconnect(){
 
@@ -411,6 +408,8 @@ while (!mqtt.connected()) {
 }
 
 
+
+
 //  }
 
   //   uint32_t t = millis();
@@ -424,3 +423,52 @@ while (!mqtt.connected()) {
   //   return;
   // }
 }
+
+void getNtpTime(){
+  //connect to WiFi
+  Serial.printf("connecting to %s ", ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println(" connected");
+  
+  // init, get NTP time, set RTC
+  configTzTime(timeZone,  ntpServer);
+
+  // debug 
+  Serial.print("get NTP time, RTC set to: ");
+  printLocalTime();
+  Serial.println();
+
+  //disconnect WiFi as it's no longer needed
+  // WiFi.disconnect(true);
+  // WiFi.mode(WIFI_OFF);
+}
+
+void setTimezone(){
+  Serial.print("set timezone to ");
+  Serial.println(timeZone);
+  setenv("TZ",timeZone,1);  //  set timezone 
+  tzset();
+}
+
+void printLocalTime(){ 
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("failed to obtain time");
+    return;
+  }
+
+  // print time human readable
+  char strftime_buf[64];
+  strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+  Serial.println(strftime_buf);
+
+  // print epoch time 
+  time_t epoch_ts = mktime(&timeinfo);  // get epoch time from struct
+  Serial.println("epoch time is " + String(epoch_ts));
+}
+
+
+

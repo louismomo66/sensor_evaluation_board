@@ -33,19 +33,19 @@ String bmeString() {
   float bme1T = bmp.readTemperature();
   float bme1H = bmp.readHumidity();
   float bmep =  bmp.readPressure() / 100.0F;
-  String bme1 = "BME1 " + String(bme1T) + " " + String(bme1H) + " "+String(bmep)+ " ";
+  String bme1 = "BME1," + String(bme1T) + "," + String(bme1H) + ","+String(bmep)+ ",";
 
   TCA9548A(2);
   float bme2T = bmp.readTemperature();
   float bme2H = bmp.readHumidity();
    float bmep1 =  bmp.readPressure() / 100.0F;
-  String bme2 = "BME2 " + String(bme2T) + " " + String(bme2H) +" "+ String(bmep1)+ " ";
+  String bme2 = "BME2," + String(bme2T) + "," + String(bme2H) +","+ String(bmep1)+ ",";
 
   TCA9548A(3);
   float bme3T = bmp.readTemperature();
   float bme3H = bmp.readHumidity();
    float bmep2 =  bmp.readPressure() / 100.0F;
-  String bme3 = "BME3 " + String(bme3T) + " " + String(bme3H)+ " " + String(bmep2);
+  String bme3 = "BME3," + String(bme3T) + "," + String(bme3H)+ "," + String(bmep2);
 
   delay(2000);
 
