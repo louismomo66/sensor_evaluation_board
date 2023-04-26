@@ -207,14 +207,7 @@ struct tm timeinfo;  // time struct
 
 
 void setup() {
-if (!getLocalTime(&timeinfo)) {
-    Serial.println("RTC is not set");
-    // set time via NTP 
-    getNtpTime();    
-  }
-setTimezone(); 
-  Serial.print("current time: ");
-  printLocalTime();
+
 
 EEPROM.begin(512);
 Wire.begin();
@@ -228,8 +221,14 @@ Serial.println("Started");
 //  pms2.wake();
 //  pms3.wake();
 // Serial.begin(9600);
-
-// pinMode(36,INPUT);
+// if (!getLocalTime(&timeinfo)) {
+//     Serial.println("RTC is not set");
+//     // set time via NTP 
+//     getNtpTime();    
+//   }
+// setTimezone(); 
+//   Serial.print("current time: ");
+//   printLocalTime();
 
 initialize();
 
@@ -429,7 +428,7 @@ void getNtpTime(){
   Serial.printf("connecting to %s ", ssid);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    // delay(500);
     Serial.print(".");
   }
   Serial.println(" connected");

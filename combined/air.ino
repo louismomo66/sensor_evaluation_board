@@ -110,9 +110,9 @@ String air1string(){
   pms1.read();
   if (pms1) {
     // reading data was successf
-   String one = "PM1.0: " + String(pms1.pm01);
-    String two = "PM2.5: " + String(pms1.pm25);
-    String three = "PM10: " + String(pms1.pm10);
+   String one = "PM1.0:," + String(pms1.pm01);
+    String two = "PM2.5:," + String(pms1.pm25);
+    String three = "PM10:," + String(pms1.pm10);
 
     String air1 = "One:," + one +","+ two +","+ three;
     // Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
@@ -128,9 +128,9 @@ String air2string(){
   pms2.init();
   pms2.read();
     if (pms2) {
-   String one1 = "PM1.0: " + String(pms2.pm01);
-    String two2 = "PM2.5: " + String(pms2.pm25);
-    String three3 = "PM10: " + String(pms2.pm10);
+   String one1 = "PM1.0:,"+ String(pms2.pm01);
+    String two2 = "PM2.5:," + String(pms2.pm25);
+    String three3 = "PM10:,"+ String(pms2.pm10);
 
     // String air2 = "Two: " + one1+ two2 + three3 + "(u/m3)";
     String air2= "Two:, " + one1 +","+ two2 +","+ three3;
@@ -148,9 +148,9 @@ String air3string(){
   pms3.read();
     if (pms3) {
     // reading data was successful!
- String one11 = "PM1.0: " + String(pms3.pm01);
-    String two22 = "PM2.5: " + String(pms3.pm25);
-    String three33 = "PM10: " + String(pms3.pm10);
+ String one11 = "PM1.0:," + String(pms3.pm01);
+    String two22 = "PM2.5:," + String(pms3.pm25);
+    String three33 = "PM10:," + String(pms3.pm10);
 
     // String air3 = "Three: " + one11+ two22 + three33 + "(u/m3)";
     String air3 = "Three:," + one11 +","+ two22 +","+ three33;

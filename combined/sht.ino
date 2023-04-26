@@ -22,12 +22,12 @@ String shtString() {
   TCA9548A(1);
   float sht1T = sht.readTemperature();
   float sht1H = sht.readHumidity();
-  String sht1 = "SHT1," + String(sht1T) + "," + String(sht1H) + " ";
+  String sht1 = "SHT1," + String(sht1T) + "," + String(sht1H) + ",";
 
   TCA9548A(2);
   float sht2T = sht.readTemperature();
   float sht2H = sht.readHumidity();
-  String sht2 = "SHT2," + String(sht2T) + "," + String(sht2H) + " ";
+  String sht2 = "SHT2," + String(sht2T) + "," + String(sht2H) + ",";
 
   TCA9548A(3);
   float sht3T = sht.readTemperature();

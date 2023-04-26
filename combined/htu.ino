@@ -23,12 +23,12 @@ String htuString() {
   TCA9548A(4);
   float htu1T = htu.readTemperature();
   float htu1H = htu.readHumidity();
-  String htu1 = "HTU1," + String(htu1T) + "," + String(htu1H) + " ";
+  String htu1 = "HTU1," + String(htu1T) + "," + String(htu1H) + ",";
 
   TCA9548A(5);
   float htu2T = htu.readTemperature();
   float htu2H = htu.readHumidity();
-  String htu2 = "HTU2," + String(htu2T) + "," + String(htu2H) + " ";
+  String htu2 = "HTU2," + String(htu2T) + "," + String(htu2H) + ",";
 
   TCA9548A(0);
   float htu3T = htu.readTemperature();
