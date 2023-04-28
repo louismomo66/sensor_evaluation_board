@@ -320,18 +320,18 @@ while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
 //     }
 
     // GPRS connection parameters are usually set after network registration
-    SerialMon.print(F("Connecting to "));
-    SerialMon.print(apn);
-    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-        SerialMon.println(" fail");
-        delay(10000);
-        return;
-    }
-    SerialMon.println(" success");
+    // SerialMon.print(F("Connecting to "));
+    // SerialMon.print(apn);
+    // if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+    //     SerialMon.println(" fail");
+    //     delay(10000);
+    //     return;
+    // }
+    // SerialMon.println(" success");
 
-    if (modem.isGprsConnected()) {
-        SerialMon.println("GPRS connected");
-    }
+    // if (modem.isGprsConnected()) {
+    //     SerialMon.println("GPRS connected");
+    // }
 
 // readsd();
     // MQTT Broker setup
@@ -340,11 +340,12 @@ mqtt.setServer(broker,8383);
 if(!mqtt.connected()){
   reconnect();
 }
-
+  
 mqtt.loop();
+
 send_data();
 // rtc.setTime(10, 15, 17, 10, 3, 2023);  // 17th Jan 2021 15:24:30
-
+ modem.sendAT(GF("+CPOWD=1"));
  // To send an SMS, call modem.sendSMS(SMS_TARGET, smsMessage)
   // String smsMessage = "Hello from ESP32!";
   // if(modem.sendSMS(SMS_TARGET, smsMessage)){
@@ -364,12 +365,12 @@ send_data();
 // delay(5000);
 //  Put all sensors to sleep
 // modem.sendAT(GF("+CPOWD=1"));
-  modem.sendAT(GF("+CPOWD=1"));
-  pms1.sleep();
-  pms2.sleep();
-  pms3.sleep(); 
-  Serial.print("Sleep");
-esp_sleep_enable_timer_wakeup(20 * 1000000);
+ 
+pms1.sleep();
+pms2.sleep();
+pms3.sleep(); 
+// Serial.print("Sleep");
+esp_sleep_enable_timer_wakeup(50 * 1000000);
 esp_deep_sleep_start();
 
 
@@ -384,7 +385,7 @@ void loop()
 void reconnect(){
 
 unsigned long start_time = 0; // declare a variable to store the start time
-int delay_time = 5000; // set the delay time to 5 seconds
+int delay_time = 1000; // set the delay time to 5 seconds
 
 while (!mqtt.connected()) {
     SerialMon.println("=== Attempting Connection... ===");

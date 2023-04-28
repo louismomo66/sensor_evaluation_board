@@ -1,5 +1,5 @@
 void air(){
-
+pms1.init();
   pms1.read();
    if (pms1) {
     Serial.print(F("Sensor 1 - PM1.0 "));
@@ -13,6 +13,7 @@ void air(){
     Serial.println(F(" [ug/m3]"));
     
   }
+  pms2.init();
   pms2.read();
   if (pms2) {
     Serial.print(F("Sensor 2 - PM1.0 "));
@@ -25,6 +26,7 @@ void air(){
     Serial.print(pms2.pm10);
     Serial.println(F(" [ug/m3]"));
   }
+  pms3.init();
   pms3.read();
   if (pms3) {
     Serial.print(F("Sensor 3 - PM1.0 "));
@@ -106,7 +108,7 @@ void air(){
 //  }
 String air1string(){
   pms1.init();
-  // delay(1000);
+  delay(10);
   pms1.read();
   if (pms1) {
     // reading data was successf

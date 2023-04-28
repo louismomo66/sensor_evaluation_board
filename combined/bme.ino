@@ -33,7 +33,7 @@ String bmeString() {
   float bme1T = bmp.readTemperature();
   float bme1H = bmp.readHumidity();
   float bmep =  bmp.readPressure() / 100.0F;
-  String bme1 = "BME1," + String(bme1T) + "," + String(bme1H) + ","+String(bmep)+ ",";
+  String bme1 = "BME1," + String(bme1T) + "," + String(bme1H) +","+String(bmep)+ ",";
 
   TCA9548A(2);
   float bme2T = bmp.readTemperature();
