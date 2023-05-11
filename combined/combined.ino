@@ -1,7 +1,8 @@
-
 #include <Wire.h>
 #include <SPI.h>
-#include <WiFi.h>
+// #include <WiFi.h>
+
+#include <ESP32Time.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_HDC1000.h>
 #include "Adafruit_SHT31.h"
@@ -9,7 +10,7 @@
 #include <SD.h>
 #include "FS.h"
 #include <HardwareSerial.h>
-#include "time.h"
+// #include "time.h"
 // #include <SoftwareSerial.h>
 #include <Adafruit_ADS1X15.h>
 #include <EEPROM.h>
@@ -28,9 +29,9 @@ SPIClass sdSPI(HSPI);
 #define MOSI 23 //green
 #define CS  5 //orange
 
-//  #define SIM800L_IP5306_VERSION_20190610
+ #define SIM800L_IP5306_VERSION_20190610
 // #define SIM800L_AXP192_VERSION_20200327
-#define SIM800C_AXP192_VERSION_20200609
+// #define SIM800C_AXP192_VERSION_20200609
 // #define SIM800L_IP5306_VERSION_20200811
 
 #include "utilities.h"
@@ -40,10 +41,10 @@ SPIClass sdSPI(HSPI);
 #define SerialMon Serial
 // Set serial for AT commands (to the module)
 // Use Hardware Serial on Mega, Leonardo, Micro
-// #define TINY_GSM_RX_BUFFER   1024  
+#define TINY_GSM_RX_BUFFER   1024  
 #define SerialAT Serial1
 // See all AT commands, if wanted
-//#define DUMP_AT_COMMANDS
+// #define DUMP_AT_COMMANDS
 // Define the serial console for debug prints, if needed
 #define TINY_GSM_DEBUG SerialMon
 // Add a reception delay - may be needed for a fast processor at a slow baud rate
@@ -165,18 +166,18 @@ void TCA9548A(uint8_t bus){
 }
 
 // File myfile;
-#define SD_CS 5
+// #define SD_CS 5
 String dataMessage;
 
 
-#define RXD1 15 // To sensor TXD
-#define TXD1 0 // To sensor RXD
+#define RXD1 15//15  To sensor TXD
+#define TXD1  0//0  To sensor RXD
 // HardwareSerial mySerial4(0); // RX4, TX4
 #define RXD2 4 // To sensor TXD
 #define TXD2 14 // To sensor RXD
 
-#define RXD3 32 // To sensor TXD
-#define TXD3 33 // To sensor RXD
+#define RXD3 33 // To sensor TXD
+#define TXD3 32 // To sensor RXD
 
 // SoftwareSerial mySerial4(15, 4);
 // #ifndef ESP32
@@ -198,20 +199,20 @@ SerialPM pms3(PMS7003, Serial2);
 // };
 // struct pms5003data data;
 
-const char* ssid       = "kl";
-const char* password   = "9999999990";
-const char* ntpServer = "de.pool.ntp.org";
-const char* timeZone = "EAT-3";  // UTC
-struct tm timeinfo;  // time struct
+// const char* ssid       = "kl";
+// const char* password   = "9999999990";
+// const char* ntpServer = "de.pool.ntp.org";
+// const char* timeZone = "EAT-3";  // UTC
+// struct tm timeinfo;  // time struct
 
 String gsmDateTime;
 String helloString;
-
+ESP32Time rtc(3600);
 
 void setup() {
 
-  pinMode(13, OUTPUT);
-  digitalWrite(13,LOW);
+// pinMode(13, OUTPUT);
+digitalWrite(13,LOW);
 // EEPROM.begin(512);
 Wire.begin();
 // mySerial4.begin(9600);
@@ -232,16 +233,17 @@ Serial.println("Started");
 // setTimezone(); 
 //   Serial.print("current time: ");
 //   printLocalTime();
+rtc.setTime(30, 24, 15, 17, 1, 2021);
+Serial.println(rtc.getTime("%A, %B %d %Y %H:%M:%S")); 
+initialize();
+initialize_sd();
 
-// initialize();
-
-// initialize_sd();
-// WriteFile();
 // readsd();
 // readlast();
-// air();
-// voltage();
+air();
+voltage();
 
+WriteFile();
 // voltage();
 setupModem();
  
@@ -261,36 +263,37 @@ SerialMon.println("Initializing modem...");
 modem.restart();
 
 // SerialMon.print("Waiting for network...");
-
+modem.sendAT("+CNETLIGHT=0");
 // start_time = millis(); // record the start time
 
 // while (!modem.waitForNetwork()) {
-//   if (millis() - start_time > 10000) { // exit the loop after 10 seconds
+//   if (millis() - start_time > 1000) { // exit the loop after 10 seconds
 //     SerialMon.println(" fail");
 //     return;
 //   }
 // }
 
-SerialMon.println(" success");
+// SerialMon.println(" success");
 
 // if (modem.isNetworkConnected()) {
-//   // SerialMon.println("Network connected");
+//   SerialMon.println("Network connected");
 // }
+// SerialAT.println("AT+CCLK?");
+// ShowSerialData();
 
 // GPRS connection parameters are usually set after network registration
 // SerialMon.print(F("Connecting to "));
 // SerialMon.print(apn);
 
-start_time = millis(); // record the start time
+// start_time = millis(); // record the start time
 
-while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-  if (millis() - start_time > 4000) { // exit the loop after 10 seconds
-    SerialMon.println(" fail");
-    return;
-  }
-}
-SerialAT.println("AT+CCLK?");
-ShowSerialData();
+// while (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+//   if (millis() - start_time > 4000) { // exit the loop after 10 seconds
+//     SerialMon.println(" fail");
+//     return;
+//   }
+// }
+
 // SerialMon.println(" success");
 
 // if (modem.isGprsConnected()) {
@@ -326,12 +329,12 @@ ShowSerialData();
     // GPRS connection parameters are usually set after network registration
     // SerialMon.print(F("Connecting to "));
     // SerialMon.print(apn);
-    // if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-    //     SerialMon.println(" fail");
-    //     delay(10000);
-    //     return;
-    // }
-    // SerialMon.println(" success");
+    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+        SerialMon.println(" fail");
+        delay(1000);
+        return;
+    }
+    SerialMon.println(" success");
 
     // if (modem.isGprsConnected()) {
     //     SerialMon.println("GPRS connected");
@@ -358,8 +361,8 @@ send_data();
   // else{
   //   SerialMon.println("SMS failed to send");
   // }
-initialize_sd();
-WriteFile();
+// initialize_sd();
+// WriteFile();
 // Serial.println("Entering deep sleep mode for 1 minute...");
 //  // 60e6 microseconds = 1 minute
 // esp_sleep_enable_timer_wakeup( * 1000000);
@@ -370,12 +373,14 @@ WriteFile();
 // delay(5000);
 //  Put all sensors to sleep
 // modem.sendAT(GF("+CPOWD=1"));
- 
+//  String myString = readStringFromEEPROM(40);
+//   Serial.println(myString);
 pms1.sleep();
 pms2.sleep();
 pms3.sleep(); 
+
 // Serial.print("Sleep");
-esp_sleep_enable_timer_wakeup(50 * 1000000);
+esp_sleep_enable_timer_wakeup(250 * 1000000);
 esp_deep_sleep_start();
 
 
@@ -387,6 +392,33 @@ void loop()
 {
 
 }
+
+// void setupModem()
+// {
+// #ifdef MODEM_RST
+//     // Keep reset high
+//     pinMode(MODEM_RST, OUTPUT);
+//     digitalWrite(MODEM_RST, HIGH);
+// #endif
+
+//     pinMode(MODEM_PWRKEY, OUTPUT);
+//     pinMode(MODEM_POWER_ON, OUTPUT);
+
+//     // Turn on the Modem power first
+//     digitalWrite(MODEM_POWER_ON, HIGH);
+
+//     // Pull down PWRKEY for more than 1 second according to manual requirements
+//     digitalWrite(MODEM_PWRKEY, HIGH);
+//     delay(100);
+//     digitalWrite(MODEM_PWRKEY, LOW);
+//     delay(1000);
+//     digitalWrite(MODEM_PWRKEY, HIGH);
+
+//     // Initialize the indicator as an output
+//     pinMode(LED_GPIO, OUTPUT);
+//     digitalWrite(LED_GPIO, LED_OFF);
+// }
+
 void reconnect(){
 
 unsigned long start_time = 0; // declare a variable to store the start time
@@ -460,33 +492,33 @@ while (!mqtt.connected()) {
 // }
 void ShowSerialData()
 {
-  while(SerialAT.available()!=0)
+  while(SerialAT.available()>0){
   gsmDateTime += (char) SerialAT.read();
-   SerialMon.print("GSM Date/Time: ");
+  SerialMon.print("GSM Date/Time: ");
   SerialMon.println(gsmDateTime);
- helloString = gsmDateTime.substring(10,30);
-Serial.println(helloString);
-writeStringToEEPROM(40,helloString);
+  helloString = gsmDateTime.substring(10,30);
+  Serial.println(helloString);}
+  writeStringToEEPROM(40,helloString);
 //  Serial.write(SerialAT.read());
   //  delay(5000); 
    
   
 }
-void printLocalTime(){ 
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("failed to obtain time");
-    return;
-  }
+// void printLocalTime(){ 
+//   if(!getLocalTime(&timeinfo)){
+//     Serial.println("failed to obtain time");
+//     return;
+//   }
 
-  // print time human readable
-  char strftime_buf[64];
-  strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
-  Serial.println(strftime_buf);
+//   // print time human readable
+//   char strftime_buf[64];
+//   strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+//   Serial.println(strftime_buf);
 
-  // print epoch time 
-  time_t epoch_ts = mktime(&timeinfo);  // get epoch time from struct
-  Serial.println("epoch time is " + String(epoch_ts));
-}
+//   // print epoch time 
+//   time_t epoch_ts = mktime(&timeinfo);  // get epoch time from struct
+//   Serial.println("epoch time is " + String(epoch_ts));
+// }
 String readStringFromEEPROM(int addrOffset) {
   String str = "";
   char ch;

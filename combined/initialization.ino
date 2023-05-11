@@ -2,7 +2,7 @@ void initialize(){
  pms1.wake();
  pms2.wake();
  pms3.wake();
- delay(3000);
+ delay(1000);
   // pms1.init();
   // pms2.init();
   // pms3.init();
