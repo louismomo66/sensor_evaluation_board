@@ -4,7 +4,7 @@ void initialize_sd(){
   // if(!SD.begin(SD_CS)) {
     sdSPI.begin(SCK, MISO, MOSI, CS);
       if (!SD.begin(CS, sdSPI)) {                // Check SD card
-    // Serial.println("Card Mount Failed");
+    Serial.println("Card Mount Failed");
     return;
   }
   //  uint8_t cardType = SD.cardType();
@@ -63,13 +63,13 @@ void WriteFile(){
   // }
   // char strftime_buf[64];
   // strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
-  // String myString = readStringFromEEPROM(40);
-  // Serial.println(myString);
+  String myString = readStringFromEEPROM(40);
+  Serial.println(myString);
     String air_1 = air1string();
     String air_2 =air2string();
     String air_3 =air3string();
     String dataMessage2 = ","+air_1 + "\n" + ","+air_2 + "\n" +","+ air_3 +"\n" ;
-    // appendFile(SD, "/air.csv",myString.c_str());
+    appendFile(SD, "/air.csv",myString.c_str());
     appendFile(SD, "/air.csv", dataMessage2.c_str());
 
     String bme_all =bmeString();
@@ -77,7 +77,7 @@ void WriteFile(){
     String htu_all =htuString();
     String sht_all =shtString();
     String dataMessage = ","+bme_all + "\n" + ","+hdc_all + "\n" + ","+htu_all + "\n" + ","+sht_all + "\n";
-    // appendFile(SD, "/sensors.csv",myString.c_str());
+    appendFile(SD, "/sensors.csv",myString.c_str());
     appendFile(SD, "/sensors.csv", dataMessage.c_str());
 return;
 }

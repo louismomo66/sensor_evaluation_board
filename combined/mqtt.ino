@@ -21,8 +21,8 @@ void send_data(){
     String air1 =air1string();
     String air2 =air2string();
     String air3 =air3string();
-    // String volts =String(voltage());
-    
+    // String volts =String();
+    // voltage()
     mqtt.publish(topicAir1 , air1.c_str());
     mqtt.publish(topicAir2 , air2.c_str());
     mqtt.publish(topicAir3 , air3.c_str());
